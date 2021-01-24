@@ -1,2 +1,2 @@
-export * from './lib/types/options';
-export * from './lib/I18nextHandler';
+export * from './lib/types/index';
+export * from './lib/index';

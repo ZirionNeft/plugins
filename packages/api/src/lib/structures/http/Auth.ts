@@ -1,11 +1,12 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import type { Snowflake } from 'discord-api-types/v8';
 
 export class Auth {
 	/**
 	 * The client's application id, this can be retrieved in Discord Developer Portal at https://discord.com/developers/applications.
 	 * @since 1.0.0
 	 */
-	public id: string;
+	public id: Snowflake;
 
 	/**
 	 * The name for the cookie, this will be used to identify a Secure HttpOnly cookie.
@@ -29,7 +30,7 @@ export class Auth {
 	#secret: string;
 
 	private constructor(options: ServerOptionsAuth) {
-		this.id = options.id;
+		this.id = options.id as Snowflake;
 		this.cookie = options.cookie ?? 'SAPPHIRE_AUTH';
 		this.scopes = options.scopes ?? ['identify'];
 		this.redirect = options.redirect;
@@ -62,10 +63,15 @@ export class Auth {
 	 * @param token An data to decrypt
 	 * @param secret The secret to decrypt the data with
 	 */
-	public decrypt(token: string): AuthData {
+	public decrypt(token: string): AuthData | null {
 		const [data, iv] = token.split('.');
 		const decipher = createDecipheriv('aes-256-cbc', this.#secret, Buffer.from(iv, 'base64'));
-		return JSON.parse(decipher.update(data, 'base64', 'utf8') + decipher.final('utf8'));
+
+		try {
+			return JSON.parse(decipher.update(data, 'base64', 'utf8') + decipher.final('utf8'));
+		} catch {
+			return null;
+		}
 	}
 
 	public static create(options?: ServerOptionsAuth): Auth | null {
